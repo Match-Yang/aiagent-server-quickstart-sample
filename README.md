@@ -30,12 +30,12 @@ src
 ├── app
 │   ├── api
 │   │   ├── agent
+│   │   │   ├── register
+│   │   │   │   └── route.ts        # 注册AI Agent
 │   │   │   ├── create
-│   │   │   │   └── route.ts        # 创建AI Agent
-│   │   │   ├── start
-│   │   │   │   └── route.ts        # 启动AI Agent
-│   │   │   ├── stop
-│   │   │   │   └── route.ts        # 停止AI Agent
+│   │   │   │   └── route.ts        # 创建AI Agent 实例
+│   │   │   ├── delete
+│   │   │   │   └── route.ts        # 删除AI Agent实例
 │   │   │   └── types.ts            # 类型定义
 │   │   └── zegotoken
 │   │       └── route.ts            # ZEGO Token生成API
@@ -48,11 +48,11 @@ src
 
 ## API接口调用示例
 
-本项目提供了以下几个主要API接口：
+本示例提供了以下几个主要API接口：
 
-1. 创建AI代理 `/api/agent/create`：用于创建代理。
-2. 启动AI代理 `/api/agent/start`：用于启动代理并开始会话。
-3. 停止AI代理 `/api/agent/stop`：用于停止代理实例。
+1. 注册：`/api/agent/register`：用于注册AI Agent，注册后可创建实例。建议在APP初始化后就调用。本示例使用一个固定的AgentID，请根据实际业务修改逻辑。
+2. 创建实例 `/api/agent/create`：用于创建AI Agent实例。创建后自动加入房间与用户对话。
+3. 删除实例 `/api/agent/delete`：用于删除AI Agent实例。
 4. 获取ZEGO Token `/api/zegotoken`：用于获取ZEGO服务所需的token。
 
 下面是使用不同编程语言调用这些接口的示例：
@@ -60,11 +60,11 @@ src
 ### cURL 示例
 
 ```bash
-# 1. 创建AI代理
-curl -X POST https://你的服务域名/api/agent/create
+# 1. 注册AI Agent
+curl -X POST https://你的服务域名/api/agent/register
 
-# 2. 启动AI代理
-curl -X POST https://你的服务域名/api/agent/start \
+# 2. 创建AI Agent实例
+curl -X POST https://你的服务域名/api/agent/create \
   -H "Content-Type: application/json" \
   -d '{
     "room_id": "room123",
@@ -74,8 +74,8 @@ curl -X POST https://你的服务域名/api/agent/start \
     "agent_user_id": "agent123"
   }'
 
-# 3. 停止AI代理
-curl -X POST https://你的服务域名/api/agent/stop \
+# 3. 删除AI Agent实例
+curl -X POST https://你的服务域名/api/agent/delete \
   -H "Content-Type: application/json" \
   -d '{
     "agent_instance_id": "agentInstanceId123"
@@ -102,10 +102,10 @@ public class ZegoApiExample {
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final OkHttpClient client = new OkHttpClient();
     
-    // 1. 创建AI代理
-    public static void createAgent() throws IOException {
+    // 1. 注册AI Agent
+    public static void registerAgent() throws IOException {
         Request request = new Request.Builder()
-                .url(BASE_URL + "/api/agent/create")
+                .url(BASE_URL + "/api/agent/register")
                 .post(RequestBody.create("", JSON))
                 .build();
         
@@ -114,8 +114,8 @@ public class ZegoApiExample {
         }
     }
     
-    // 2. 启动AI代理
-    public static void startAgent(String roomId, String userId, String userStreamId, 
+    // 2. 创建AI Agent实例
+    public static void createAgentInstance(String roomId, String userId, String userStreamId, 
                                  String agentStreamId, String agentUserId) throws IOException {
         JSONObject json = new JSONObject();
         json.put("room_id", roomId);
@@ -126,7 +126,7 @@ public class ZegoApiExample {
         
         RequestBody body = RequestBody.create(json.toString(), JSON);
         Request request = new Request.Builder()
-                .url(BASE_URL + "/api/agent/start")
+                .url(BASE_URL + "/api/agent/create")
                 .post(body)
                 .build();
         
@@ -135,14 +135,14 @@ public class ZegoApiExample {
         }
     }
     
-    // 3. 停止AI代理
-    public static void stopAgent(String agentInstanceId) throws IOException {
+    // 3. 删除AI Agent实例
+    public static void deleteAgentInstance(String agentInstanceId) throws IOException {
         JSONObject json = new JSONObject();
         json.put("agent_instance_id", agentInstanceId);
         
         RequestBody body = RequestBody.create(json.toString(), JSON);
         Request request = new Request.Builder()
-                .url(BASE_URL + "/api/agent/stop")
+                .url(BASE_URL + "/api/agent/delete")
                 .post(body)
                 .build();
         
@@ -172,13 +172,13 @@ public class ZegoApiExample {
 
 @interface ZegoApiExample : NSObject
 
-+ (void)createAgent;
-+ (void)startAgentWithRoomId:(NSString *)roomId
++ (void)registerAgent;
++ (void)createAgentWithRoomId:(NSString *)roomId
                       userId:(NSString *)userId
                 userStreamId:(NSString *)userStreamId
               agentStreamId:(NSString *)agentStreamId
                 agentUserId:(NSString *)agentUserId;
-+ (void)stopAgentWithInstanceId:(NSString *)agentInstanceId;
++ (void)deleteAgentWithInstanceId:(NSString *)agentInstanceId;
 + (void)getZegoTokenWithUserId:(NSString *)userId;
 
 @end
@@ -188,9 +188,9 @@ public class ZegoApiExample {
 // 基础URL
 static NSString *const kBaseUrl = @"https://你的服务域名";
 
-// 1. 创建AI代理
-+ (void)createAgent {
-    NSURL *url = [NSURL URLWithString:[kBaseUrl stringByAppendingString:@"/api/agent/create"]];
+// 1. 注册AI Agent
++ (void)registerAgent {
+    NSURL *url = [NSURL URLWithString:[kBaseUrl stringByAppendingString:@"/api/agent/register"]];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"POST"];
     
@@ -213,7 +213,7 @@ static NSString *const kBaseUrl = @"https://你的服务域名";
                 return;
             }
             
-            NSLog(@"创建Agent成功: %@", json);
+            NSLog(@"注册Agent成功: %@", json);
         } else {
             NSLog(@"请求失败，状态码: %ld", (long)httpResponse.statusCode);
         }
@@ -222,13 +222,13 @@ static NSString *const kBaseUrl = @"https://你的服务域名";
     [task resume];
 }
 
-// 2. 启动AI代理
-+ (void)startAgentWithRoomId:(NSString *)roomId
+// 2. 创建AI Agent实例
++ (void)createAgentWithRoomId:(NSString *)roomId
                       userId:(NSString *)userId
                 userStreamId:(NSString *)userStreamId
               agentStreamId:(NSString *)agentStreamId
                 agentUserId:(NSString *)agentUserId {
-    NSURL *url = [NSURL URLWithString:[kBaseUrl stringByAppendingString:@"/api/agent/start"]];
+    NSURL *url = [NSURL URLWithString:[kBaseUrl stringByAppendingString:@"/api/agent/create"]];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"POST"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
@@ -271,7 +271,7 @@ static NSString *const kBaseUrl = @"https://你的服务域名";
                 return;
             }
             
-            NSLog(@"启动Agent成功: %@", json);
+            NSLog(@"创建Agent实例成功: %@", json);
         } else {
             NSLog(@"请求失败，状态码: %ld", (long)httpResponse.statusCode);
         }
@@ -280,9 +280,9 @@ static NSString *const kBaseUrl = @"https://你的服务域名";
     [task resume];
 }
 
-// 3. 停止AI代理
-+ (void)stopAgentWithInstanceId:(NSString *)agentInstanceId {
-    NSURL *url = [NSURL URLWithString:[kBaseUrl stringByAppendingString:@"/api/agent/stop"]];
+// 3. 删除AI Agent实例
++ (void)deleteAgentWithInstanceId:(NSString *)agentInstanceId {
+    NSURL *url = [NSURL URLWithString:[kBaseUrl stringByAppendingString:@"/api/agent/delete"]];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"POST"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
@@ -321,7 +321,7 @@ static NSString *const kBaseUrl = @"https://你的服务域名";
                 return;
             }
             
-            NSLog(@"停止Agent成功: %@", json);
+            NSLog(@"删除Agent实例成功: %@", json);
         } else {
             NSLog(@"请求失败，状态码: %ld", (long)httpResponse.statusCode);
         }
@@ -374,10 +374,10 @@ static NSString *const kBaseUrl = @"https://你的服务域名";
 // 基础URL
 const BASE_URL = 'https://你的服务域名';
 
-// 1. 创建AI代理
-async function createAgent() {
+// 1. 注册AI Agent
+async function registerAgent() {
   try {
-    const response = await fetch(`${BASE_URL}/api/agent/create`, {
+    const response = await fetch(`${BASE_URL}/api/agent/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -385,18 +385,18 @@ async function createAgent() {
     });
     
     const data = await response.json();
-    console.log('创建AI代理结果:', data);
+    console.log('注册AI结果:', data);
     return data;
   } catch (error) {
-    console.error('创建AI代理失败:', error);
+    console.error('注册AI Agent失败:', error);
     throw error;
   }
 }
 
-// 2. 启动AI代理
-async function startAgent(roomId, userId, userStreamId, agentStreamId, agentUserId, messages = []) {
+// 2. 创建AI Agent实例
+async function createAgentInstance(roomId, userId, userStreamId, agentStreamId, agentUserId, messages = []) {
   try {
-    const response = await fetch(`${BASE_URL}/api/agent/start`, {
+    const response = await fetch(`${BASE_URL}/api/agent/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -412,18 +412,18 @@ async function startAgent(roomId, userId, userStreamId, agentStreamId, agentUser
     });
     
     const data = await response.json();
-    console.log('启动AI代理结果:', data);
+    console.log('创建AI Agent实例结果:', data);
     return data;
   } catch (error) {
-    console.error('启动AI代理失败:', error);
+    console.error('创建AI Agent实例失败:', error);
     throw error;
   }
 }
 
-// 3. 停止AI代理
-async function stopAgent(agentInstanceId) {
+// 3. 删除AI Agent实例
+async function deleteAgentInstance(agentInstanceId) {
   try {
-    const response = await fetch(`${BASE_URL}/api/agent/stop`, {
+    const response = await fetch(`${BASE_URL}/api/agent/delete`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -434,10 +434,10 @@ async function stopAgent(agentInstanceId) {
     });
     
     const data = await response.json();
-    console.log('停止AI代理结果:', data);
+    console.log('删除AI Agent实例结果:', data);
     return data;
   } catch (error) {
-    console.error('停止AI代理失败:', error);
+    console.error('删除AI Agent实例失败:', error);
     throw error;
   }
 }
@@ -457,39 +457,6 @@ async function getZegoToken(userId) {
     throw error;
   }
 }
-
-// 使用示例
-async function example() {
-  try {
-    // 1. 创建AI代理
-    await createAgent();
-    
-    // 2. 启动AI代理
-    const startResponse = await startAgent(
-      'room123',
-      'user123',
-      'stream_user123',
-      'stream_agent123',
-      'agent123'
-    );
-    
-    const agentInstanceId = startResponse.agentInstanceId;
-    
-    // 这里可以进行与AI代理的交互...
-    
-    // 3. 停止AI代理
-    await stopAgent(agentInstanceId);
-    
-    // 4. 获取ZEGO Token
-    const tokenData = await getZegoToken('user123');
-    console.log('Token:', tokenData.token);
-  } catch (error) {
-    console.error('示例执行失败:', error);
-  }
-}
-
-// 执行示例
-// example();
 ```
 
 请根据您的实际情况修改以上示例中的`BASE_URL`和相关参数。在实际开发中，您可能还需要添加错误处理、重试机制、授权验证等功能，以确保API调用的可靠性和安全性。
