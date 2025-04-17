@@ -158,8 +158,8 @@ export class ZegoAIAgent {
     }
 
     async registerAgent(agentId: string,agentName: string) {
-        if (!process.env.LLM_BASE_URL || !process.env.LLM_MODEL) {
-            throw new Error('LLM_BASE_URL and LLM_MODEL environment variables must be set');
+        if (!process.env.LLM_BASE_URL || !process.env.LLM_API_KEY || !process.env.LLM_MODEL) {
+            throw new Error('LLM_BASE_URL, LLM_API_KEY and LLM_MODEL environment variables must be set');
         }
         const action = 'RegisterAgent';
         const body = {
@@ -168,6 +168,7 @@ export class ZegoAIAgent {
                 Name: agentName,
                 LLM: {
                     Url: process.env.LLM_BASE_URL || "",
+                    ApiKey: process.env.LLM_API_KEY || "",
                     Model: process.env.LLM_MODEL || ""
                 },
                 TTS: {
