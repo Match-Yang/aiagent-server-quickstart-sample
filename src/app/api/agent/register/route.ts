@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
         const assistant = ZegoAIAgent.getInstance();
 
-        const agents = await assistant.queryAgents();
+        const agents = await assistant.queryAgents([agent_id]);
         console.log("agents", agents);
         if (!agents || agents.length === 0 || !agents.find((agent: any) => agent.AgentId === agent_id)) {
             const result = await assistant.registerAgent(agent_id, agent_name);

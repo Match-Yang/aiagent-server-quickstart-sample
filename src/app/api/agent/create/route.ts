@@ -4,6 +4,7 @@ import { ZegoAIAgent } from '@/lib/zego/aiagent';
 
 // 定义请求体类型
 interface RequestBody {
+    agent_id: string;
     room_id: string;
     user_id: string;
     user_stream_id: string;
@@ -15,11 +16,11 @@ interface RequestBody {
 export async function POST(req: NextRequest) {
     try {
         const body: RequestBody = await req.json();
-        const { room_id, user_id, user_stream_id, agent_stream_id, agent_user_id, messages } = body;
+        const { room_id, user_id, user_stream_id, agent_stream_id, agent_user_id, messages, agent_id } = body;
         console.log("create agent instance:", room_id, user_id, user_stream_id, agent_stream_id, agent_user_id, messages);
 
         const assistant = ZegoAIAgent.getInstance();
-        const result = await assistant.createAgentInstance(user_id, {
+        const result = await assistant.createAgentInstance(agent_id, user_id, {
             RoomId: room_id,
             AgentStreamId: agent_stream_id,
             AgentUserId: agent_user_id,

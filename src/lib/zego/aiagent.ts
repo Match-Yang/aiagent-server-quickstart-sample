@@ -147,10 +147,10 @@ export class ZegoAIAgent {
         }
     }
 
-    async queryAgents() {
+    async queryAgents(agentIds: string[]) {
         const action = 'QueryAgents';
         const body = {
-            AgentIds: [process.env.AGENT_ID || ""]
+            AgentIds: agentIds
         };
         const result = await this.sendRequest<any>(action, body);
         console.log("query agents result", result);
@@ -194,10 +194,10 @@ export class ZegoAIAgent {
         return this.sendRequest<any>(action, body);
     }
 
-    async createAgentInstance(userId: string, rtcInfo: RtcInfo,  messages?: any[]) {
+    async createAgentInstance(agentId: string, userId: string, rtcInfo: RtcInfo, messages?: any[]) {
         const action = 'CreateAgentInstance';
         const body = {
-            AgentId: process.env.AGENT_ID || "",
+            AgentId: agentId,
             UserId: userId,
             RtcInfo: rtcInfo,
             MessageHistory: messages && messages.length > 0 ? {

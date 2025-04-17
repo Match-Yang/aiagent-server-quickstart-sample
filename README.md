@@ -12,6 +12,14 @@ npm run dev
 
 可以打开 [http://localhost:3000](http://localhost:3000) 查看运行结果。
 
+## 部署到 Netlify
+
+请注意⚠️：中国大陆建议使用该方式
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/zegoim/aiagent-server-quickstart-sample)
+
+点击上方按钮可以一键将此项目部署到 Netlify 平台。部署过程中，您需要导入所有必要的环境变量。
+
 ## 部署到 Vercel
 
 请注意⚠️：中国大陆访问Vercel可能会有问题。如果无法访问请科学上网。在部署好后的服务绑定自己申请的域名也可以正常访问（注意域名被墙的风险）。
@@ -51,7 +59,7 @@ src
 本示例提供了以下几个主要API接口：
 
 1. 注册：`/api/agent/register`：用于注册AI Agent，需要传入agent_id和agent_name参数。注册后可创建实例。建议在APP初始化后就调用。
-2. 创建实例 `/api/agent/create`：用于创建AI Agent实例。创建后自动加入房间与用户对话。
+2. 创建实例 `/api/agent/create`：用于创建AI Agent实例，需要传入agent_id(注册时使用的ID)和房间信息。创建后自动加入房间与用户对话。
 3. 删除实例 `/api/agent/delete`：用于删除AI Agent实例。
 4. 获取ZEGO Token `/api/zegotoken`：用于获取ZEGO服务所需的token。
 
@@ -131,6 +139,7 @@ curl -X POST https://你的服务域名/api/agent/register \
 curl -X POST https://你的服务域名/api/agent/create \
   -H "Content-Type: application/json" \
   -d '{
+    "agent_id": "your_agent_id",
     "room_id": "room123",
     "user_id": "user123",
     "user_stream_id": "stream_user123",
@@ -184,9 +193,10 @@ public class ZegoApiExample {
     }
     
     // 2. 创建AI Agent实例
-    public static void createAgentInstance(String roomId, String userId, String userStreamId, 
+    public static void createAgentInstance(String agentId, String roomId, String userId, String userStreamId, 
                                  String agentStreamId, String agentUserId) throws IOException {
         JSONObject json = new JSONObject();
+        json.put("agent_id", agentId);
         json.put("room_id", roomId);
         json.put("user_id", userId);
         json.put("user_stream_id", userStreamId);
@@ -242,11 +252,12 @@ public class ZegoApiExample {
 @interface ZegoApiExample : NSObject
 
 + (void)registerAgentWithId:(NSString *)agentId name:(NSString *)agentName;
-+ (void)createAgentWithRoomId:(NSString *)roomId
-                      userId:(NSString *)userId
-                userStreamId:(NSString *)userStreamId
-              agentStreamId:(NSString *)agentStreamId
-                agentUserId:(NSString *)agentUserId;
++ (void)createAgentWithId:(NSString *)agentId
+                   roomId:(NSString *)roomId
+                   userId:(NSString *)userId
+             userStreamId:(NSString *)userStreamId
+           agentStreamId:(NSString *)agentStreamId
+             agentUserId:(NSString *)agentUserId;
 + (void)deleteAgentWithInstanceId:(NSString *)agentInstanceId;
 + (void)getZegoTokenWithUserId:(NSString *)userId;
 
@@ -309,17 +320,19 @@ static NSString *const kBaseUrl = @"https://你的服务域名";
 }
 
 // 2. 创建AI Agent实例
-+ (void)createAgentWithRoomId:(NSString *)roomId
-                      userId:(NSString *)userId
-                userStreamId:(NSString *)userStreamId
-              agentStreamId:(NSString *)agentStreamId
-                agentUserId:(NSString *)agentUserId {
++ (void)createAgentWithId:(NSString *)agentId
+                   roomId:(NSString *)roomId
+                   userId:(NSString *)userId
+             userStreamId:(NSString *)userStreamId
+           agentStreamId:(NSString *)agentStreamId
+             agentUserId:(NSString *)agentUserId {
     NSURL *url = [NSURL URLWithString:[kBaseUrl stringByAppendingString:@"/api/agent/create"]];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"POST"];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     
     NSDictionary *body = @{
+        @"agent_id": agentId,
         @"room_id": roomId,
         @"user_id": userId,
         @"user_stream_id": userStreamId,
@@ -484,7 +497,7 @@ async function registerAgent(agentId, agentName) {
 }
 
 // 2. 创建AI Agent实例
-async function createAgentInstance(roomId, userId, userStreamId, agentStreamId, agentUserId, messages = []) {
+async function createAgentInstance(agentId, roomId, userId, userStreamId, agentStreamId, agentUserId, messages = []) {
   try {
     const response = await fetch(`${BASE_URL}/api/agent/create`, {
       method: 'POST',
@@ -492,6 +505,7 @@ async function createAgentInstance(roomId, userId, userStreamId, agentStreamId, 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        agent_id: agentId,
         room_id: roomId,
         user_id: userId,
         user_stream_id: userStreamId,
