@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
         return Response.json({
             code: 0,
             message: 'create agent instance success',
-            agentInstanceId: result
+            agent_instance_id: result
         }, { status: 200 });
     } catch (error) {
         console.error('create agent instance failed:', error);

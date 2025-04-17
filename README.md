@@ -16,7 +16,7 @@ npm run dev
 
 请注意⚠️：中国大陆访问Vercel可能会有问题。如果无法访问请科学上网。在部署好后的服务绑定自己申请的域名也可以正常访问（注意域名被墙的风险）。
 
-[![部署到Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzegoim%2Faiagent-server-quickstart-sample&env=NEXT_PUBLIC_ZEGO_APP_ID,ZEGO_SERVER_SECRET,LLM_API_KEY,LLM_BASE_URL,LLM_MODEL,AGENT_ID,TTS_BYTEDANCE_APP_ID,TTS_BYTEDANCE_TOKEN,TTS_BYTEDANCE_CLUSTER,TTS_BYTEDANCE_VOICE_TYPE&envDescription=这些是启动ZEGO的AI代理服务器所需的环境变量。请查看下方文档获取更多信息。&envLink=https://github.com/zegoim/aiagent-server-quickstart-sample/blob/main/.env.example)
+[![部署到Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzegoim%2Faiagent-server-quickstart-sample&env=NEXT_PUBLIC_ZEGO_APP_ID,ZEGO_SERVER_SECRET,LLM_API_KEY,LLM_BASE_URL,LLM_MODEL,TTS_BYTEDANCE_APP_ID,TTS_BYTEDANCE_TOKEN,TTS_BYTEDANCE_CLUSTER,TTS_BYTEDANCE_VOICE_TYPE&envDescription=这些是启动ZEGO的AI代理服务器所需的环境变量。请查看下方文档获取更多信息。&envLink=https://github.com/zegoim/aiagent-server-quickstart-sample/blob/main/.env.example)
 
 点击上方按钮可以一键将此项目部署到Vercel平台。部署过程中，您需要填写所有必要的环境变量。关于环境变量的详细说明，请参考[.env.example](.env.example)文件。
 
@@ -50,10 +50,69 @@ src
 
 本示例提供了以下几个主要API接口：
 
-1. 注册：`/api/agent/register`：用于注册AI Agent，注册后可创建实例。建议在APP初始化后就调用。本示例使用一个固定的AgentID，请根据实际业务修改逻辑。
+1. 注册：`/api/agent/register`：用于注册AI Agent，需要传入agent_id和agent_name参数。注册后可创建实例。建议在APP初始化后就调用。
 2. 创建实例 `/api/agent/create`：用于创建AI Agent实例。创建后自动加入房间与用户对话。
 3. 删除实例 `/api/agent/delete`：用于删除AI Agent实例。
 4. 获取ZEGO Token `/api/zegotoken`：用于获取ZEGO服务所需的token。
+
+### 接口返回格式
+
+所有接口的返回格式统一为JSON，包含以下字段：
+
+#### 成功返回
+```json
+{
+  "code": 0,
+  "message": "操作成功的消息",
+  // 其他数据字段（根据接口不同而不同）
+}
+```
+
+#### 错误返回
+```json
+{
+  "code": 错误码,  // 非0值
+  "message": "错误信息"
+}
+```
+
+#### 各接口特有的返回字段
+
+1. `/api/agent/register` 成功返回：
+```json
+{
+  "code": 0,
+  "message": "register agent success",
+  "agent_id": "注册的agent_id",
+  "agent_name": "注册的agent_name"
+}
+```
+
+2. `/api/agent/create` 成功返回：
+```json
+{
+  "code": 0,
+  "message": "create agent instance success",
+  "agent_instance_id": "创建的AI Agent实例ID"
+}
+```
+
+3. `/api/agent/delete` 成功返回：
+```json
+{
+  "code": 0,
+  "message": "delete agent instance success"
+}
+```
+
+4. `/api/zegotoken` 成功返回：
+```json
+{
+  "token": "生成的ZEGO token",
+  "userId": "请求的用户ID",
+  "expireTime": 过期时间戳
+}
+```
 
 下面是使用不同编程语言调用这些接口的示例：
 
@@ -61,7 +120,12 @@ src
 
 ```bash
 # 1. 注册AI Agent
-curl -X POST https://你的服务域名/api/agent/register
+curl -X POST https://你的服务域名/api/agent/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent_id": "your_agent_id",
+    "agent_name": "Your Agent Name"
+  }'
 
 # 2. 创建AI Agent实例
 curl -X POST https://你的服务域名/api/agent/create \
@@ -103,10 +167,15 @@ public class ZegoApiExample {
     private static final OkHttpClient client = new OkHttpClient();
     
     // 1. 注册AI Agent
-    public static void registerAgent() throws IOException {
+    public static void registerAgent(String agentId, String agentName) throws IOException {
+        JSONObject json = new JSONObject();
+        json.put("agent_id", agentId);
+        json.put("agent_name", agentName);
+        
+        RequestBody body = RequestBody.create(json.toString(), JSON);
         Request request = new Request.Builder()
                 .url(BASE_URL + "/api/agent/register")
-                .post(RequestBody.create("", JSON))
+                .post(body)
                 .build();
         
         try (Response response = client.newCall(request).execute()) {
@@ -172,7 +241,7 @@ public class ZegoApiExample {
 
 @interface ZegoApiExample : NSObject
 
-+ (void)registerAgent;
++ (void)registerAgentWithId:(NSString *)agentId name:(NSString *)agentName;
 + (void)createAgentWithRoomId:(NSString *)roomId
                       userId:(NSString *)userId
                 userStreamId:(NSString *)userStreamId
@@ -189,10 +258,27 @@ public class ZegoApiExample {
 static NSString *const kBaseUrl = @"https://你的服务域名";
 
 // 1. 注册AI Agent
-+ (void)registerAgent {
++ (void)registerAgentWithId:(NSString *)agentId name:(NSString *)agentName {
     NSURL *url = [NSURL URLWithString:[kBaseUrl stringByAppendingString:@"/api/agent/register"]];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"POST"];
+    [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    
+    NSDictionary *body = @{
+        @"agent_id": agentId,
+        @"agent_name": agentName
+    };
+    
+    NSError *error;
+    NSData *bodyData = [NSJSONSerialization dataWithJSONObject:body 
+                                                       options:0 
+                                                         error:&error];
+    if (error) {
+        NSLog(@"JSON序列化错误: %@", error);
+        return;
+    }
+    
+    [request setHTTPBody:bodyData];
     
     NSURLSession *session = [NSURLSession sharedSession];
     NSURLSessionDataTask *task = [session dataTaskWithRequest:request 
@@ -375,17 +461,21 @@ static NSString *const kBaseUrl = @"https://你的服务域名";
 const BASE_URL = 'https://你的服务域名';
 
 // 1. 注册AI Agent
-async function registerAgent() {
+async function registerAgent(agentId, agentName) {
   try {
     const response = await fetch(`${BASE_URL}/api/agent/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        agent_id: agentId,
+        agent_name: agentName
+      }),
     });
     
     const data = await response.json();
-    console.log('注册AI结果:', data);
+    console.log('注册AI Agent结果:', data);
     return data;
   } catch (error) {
     console.error('注册AI Agent失败:', error);
