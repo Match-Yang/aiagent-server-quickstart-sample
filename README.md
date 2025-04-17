@@ -116,9 +116,11 @@ src
 4. `/api/zegotoken` 成功返回：
 ```json
 {
+  "code": 0,
+  "message": "delete agent instance success",
   "token": "生成的ZEGO token",
-  "userId": "请求的用户ID",
-  "expireTime": 过期时间戳
+  "user_id": "请求的用户ID",
+  "expire_time": 过期时间戳
 }
 ```
 

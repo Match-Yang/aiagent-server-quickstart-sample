@@ -20,7 +20,10 @@ export async function GET(request: Request) {
     if (!userId) {
       console.log('Error: userId is missing');
       return NextResponse.json(
-        { error: 'userId is required' },
+        { 
+          code: 400,
+          message: 'userId is required' 
+        },
         { status: 400 }
       );
     }
@@ -31,7 +34,10 @@ export async function GET(request: Request) {
         hasServerSecret: !!serverSecret,
       });
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { 
+          code: 500,
+          message: 'Server configuration error' 
+        },
         { status: 500 }
       );
     }
@@ -58,15 +64,17 @@ export async function GET(request: Request) {
 
     // 返回token
     const response = {
+      code: 0,
+      message: 'Generate token success',
       token,
-      userId,
-      expireTime: Date.now() + effectiveTimeInSeconds * 1000
+      user_id: userId,
+      expire_time: Date.now() + effectiveTimeInSeconds * 1000
     };
     
     console.log('Sending response:', {
       hasToken: !!token,
       userId,
-      expireTime: response.expireTime,
+      expireTime: response.expire_time,
     });
 
     return NextResponse.json(response);
@@ -79,7 +87,10 @@ export async function GET(request: Request) {
     });
     
     return NextResponse.json(
-      { error: 'Failed to generate token' },
+      { 
+        code: 500,
+        message: 'Failed to generate token' 
+      },
       { status: 500 }
     );
   }
