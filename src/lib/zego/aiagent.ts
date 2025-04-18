@@ -40,7 +40,7 @@ export class ZegoAIAgent {
     private static instance: ZegoAIAgent;
     private appId: number;
     private serverSecret: string;
-    private baseUrl = 'https://aigc-chat-api.zegotech.cn';
+    private baseUrl = 'https://aigc-aiagent-api.zegotech.cn';
 
     private constructor(config: ZegoConfig) {
         this.appId = config.appId;
@@ -157,39 +157,37 @@ export class ZegoAIAgent {
         return result.Agents;
     }
 
-    async registerAgent(agentId: string,agentName: string) {
+    async registerAgent(agentId: string, agentName: string) {
         if (!process.env.LLM_BASE_URL || !process.env.LLM_API_KEY || !process.env.LLM_MODEL) {
             throw new Error('LLM_BASE_URL, LLM_API_KEY and LLM_MODEL environment variables must be set');
         }
         const action = 'RegisterAgent';
         const body = {
             AgentId: agentId,
-            AgentConfig: {
-                Name: agentName,
-                LLM: {
-                    Url: process.env.LLM_BASE_URL || "",
-                    ApiKey: process.env.LLM_API_KEY || "",
-                    Model: process.env.LLM_MODEL || ""
-                },
-                TTS: {
-                    Vendor: "Bytedance",
-                    Params: {
-                        "app": {
-                            "appid": process.env.TTS_BYTEDANCE_APP_ID || "",
-                            "token": process.env.TTS_BYTEDANCE_TOKEN || "",
-                            "cluster": process.env.TTS_BYTEDANCE_CLUSTER || ""
-                        },
-                        "speed_ratio": 1,
-                        "volume_ratio": 1,
-                        "pitch_ratio": 1,
-                        "emotion": "happy",
-                        "audio": {
-                            "rate": 24000,
-                            "voice_type": process.env.TTS_BYTEDANCE_VOICE_TYPE || ""
-                        }
+            Name: agentName,
+            LLM: {
+                Url: process.env.LLM_BASE_URL || "",
+                ApiKey: process.env.LLM_API_KEY || "",
+                Model: process.env.LLM_MODEL || ""
+            },
+            TTS: {
+                Vendor: "Bytedance",
+                Params: {
+                    "app": {
+                        "appid": process.env.TTS_BYTEDANCE_APP_ID || "",
+                        "token": process.env.TTS_BYTEDANCE_TOKEN || "",
+                        "cluster": process.env.TTS_BYTEDANCE_CLUSTER || ""
                     },
-                    FilterText: [{ BeginCharacters: "(", EndCharacters: ")" }, { BeginCharacters: "（", EndCharacters: "）" }, { BeginCharacters: "{", EndCharacters: "}" }],
-                }
+                    "speed_ratio": 1,
+                    "volume_ratio": 1,
+                    "pitch_ratio": 1,
+                    "emotion": "happy",
+                    "audio": {
+                        "rate": 24000,
+                        "voice_type": process.env.TTS_BYTEDANCE_VOICE_TYPE || ""
+                    }
+                },
+                FilterText: [{ BeginCharacters: "(", EndCharacters: ")" }, { BeginCharacters: "（", EndCharacters: "）" }, { BeginCharacters: "{", EndCharacters: "}" }],
             }
         };
         return this.sendRequest<any>(action, body);
@@ -200,7 +198,7 @@ export class ZegoAIAgent {
         const body = {
             AgentId: agentId,
             UserId: userId,
-            RtcInfo: rtcInfo,
+            RTC: rtcInfo,
             MessageHistory: messages && messages.length > 0 ? {
                 SyncMode: 1,
                 Messages: messages,
